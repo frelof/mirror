@@ -24,6 +24,22 @@
             overflow: hidden;
         }
 
+        /* Prevent orientation change on mobile */
+        @media screen and (orientation: landscape) {
+            body {
+                transform: rotate(0deg);
+            }
+        }
+
+        /* Force portrait orientation */
+        @media screen and (max-width: 768px) {
+            body {
+                transform: rotate(0deg);
+                width: 100vw;
+                height: 100vh;
+            }
+        }
+
         .clock {
             font-size: 4rem;
             font-weight: bold;
