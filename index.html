@@ -17,6 +17,11 @@
             justify-content: center;
             min-height: 100vh;
             gap: 40px;
+            overflow: hidden;
+        }
+
+        html {
+            overflow: hidden;
         }
 
         .clock {
@@ -55,6 +60,37 @@
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
 
+        .fullscreen-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(128, 128, 128, 0.3);
+            color: rgba(128, 128, 128, 0.8);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            opacity: 0.6;
+        }
+
+        .fullscreen-btn:hover {
+            background-color: rgba(128, 128, 128, 0.5);
+            color: rgba(128, 128, 128, 1);
+            opacity: 1;
+        }
+
+        .fullscreen-btn:active {
+            transform: scale(0.9);
+        }
+
         @media (max-width: 600px) {
             .clock {
                 font-size: 2.5rem;
@@ -78,6 +114,8 @@
         <div class="mirror-text">Dataspeilet</div>
     </div>
 
+    <div id="fullscreenBtn" class="fullscreen-btn">[ ]</div>
+
     <script>
         function updateClock() {
             const now = new Date();
@@ -94,6 +132,62 @@
         // Update clock immediately and then every second
         updateClock();
         setInterval(updateClock, 1000);
+
+        // Fullscreen functionality
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        
+        // Function to enter fullscreen
+        function enterFullscreen() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) {
+                document.documentElement.msRequestFullscreen();
+            }
+        }
+
+        // Function to exit fullscreen
+        function exitFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+
+        // Toggle fullscreen when button is clicked
+        fullscreenBtn.addEventListener('click', () => {
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                exitFullscreen();
+            } else {
+                enterFullscreen();
+            }
+        });
+
+        // Enter fullscreen when page is clicked (except on the button)
+        document.addEventListener('click', (e) => {
+            if (e.target !== fullscreenBtn && !fullscreenBtn.contains(e.target)) {
+                enterFullscreen();
+            }
+        });
+
+        // Update button text based on fullscreen state
+        document.addEventListener('fullscreenchange', updateButtonText);
+        document.addEventListener('webkitfullscreenchange', updateButtonText);
+        document.addEventListener('msfullscreenchange', updateButtonText);
+
+        function updateButtonText() {
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                fullscreenBtn.style.display = 'flex';
+                fullscreenBtn.textContent = '×';
+            } else {
+                fullscreenBtn.style.display = 'flex';
+                fullscreenBtn.textContent = '[ ]';
+            }
+        }
     </script>
 </body>
 </html>
