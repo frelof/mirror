@@ -81,7 +81,13 @@
     <script>
         function updateClock() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString();
+            const timeString = now.toLocaleTimeString('nb-NO', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZone: 'Europe/Oslo'
+            });
             document.getElementById('clock').textContent = timeString;
         }
 
