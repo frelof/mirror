@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mirror Mirror Clock</title>
+    <title>Dataspeilet</title>
     <style>
         body {
             margin: 0;
@@ -24,19 +24,50 @@
             overflow: hidden;
         }
 
-        /* Prevent orientation change on mobile */
-        @media screen and (orientation: landscape) {
-            body {
-                transform: rotate(0deg);
-            }
+        /* Force portrait orientation only when in fullscreen */
+        body:fullscreen {
+            transform: rotate(-90deg);
+            transform-origin: center center;
+            width: 100vh;
+            height: 100vw;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -50vh;
+            margin-left: -50vw;
         }
 
-        /* Force portrait orientation */
+        /* Webkit fullscreen support */
+        body:-webkit-full-screen {
+            transform: rotate(-90deg);
+            transform-origin: center center;
+            width: 100vh;
+            height: 100vw;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -50vh;
+            margin-left: -50vw;
+        }
+
+        /* Lightning Browser and other Android browsers */
+        body.fullscreen-mode {
+            transform: rotate(-90deg);
+            transform-origin: center center;
+            width: 100vh;
+            height: 100vw;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -50vh;
+            margin-left: -50vw;
+        }
+
+        /* Prevent orientation change on mobile */
         @media screen and (max-width: 768px) {
             body {
-                transform: rotate(0deg);
+                min-height: 100vh;
                 width: 100vw;
-                height: 100vh;
             }
         }
 
@@ -190,18 +221,22 @@
             }
         });
 
-        // Update button text based on fullscreen state
-        document.addEventListener('fullscreenchange', updateButtonText);
-        document.addEventListener('webkitfullscreenchange', updateButtonText);
-        document.addEventListener('msfullscreenchange', updateButtonText);
+        // Update button text and apply rotation based on fullscreen state
+        document.addEventListener('fullscreenchange', updateFullscreenState);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenState);
+        document.addEventListener('msfullscreenchange', updateFullscreenState);
 
-        function updateButtonText() {
-            if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+        function updateFullscreenState() {
+            const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+            
+            if (isFullscreen) {
                 fullscreenBtn.style.display = 'flex';
                 fullscreenBtn.textContent = '×';
+                document.body.classList.add('fullscreen-mode');
             } else {
                 fullscreenBtn.style.display = 'flex';
                 fullscreenBtn.textContent = '[ ]';
+                document.body.classList.remove('fullscreen-mode');
             }
         }
     </script>
