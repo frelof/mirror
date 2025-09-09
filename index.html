@@ -199,6 +199,49 @@
             opacity: 0.7;
         }
 
+        .dataset-widget {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            margin: 20px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dataset-loading {
+            opacity: 0.7;
+        }
+
+        .dataset-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dataset-title {
+            font-size: 1.4rem;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .dataset-counts {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .dataset-count {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            color: #ffffff;
+        }
+
         .mirror-square {
             width: 300px;
             height: 200px;
@@ -290,6 +333,18 @@
         <div class="carousel-item" id="temperatureItem">
             <div class="temperature-widget" id="temperatureWidget">
                 <div class="temperature-loading">Laster temperatur...</div>
+            </div>
+        </div>
+        
+        <div class="carousel-item" id="datasetItem">
+            <div class="dataset-widget" id="datasetWidget">
+                <div class="dataset-loading">Laster dataset...</div>
+            </div>
+        </div>
+        
+        <div class="carousel-item" id="datasetDevItem">
+            <div class="dataset-widget" id="datasetDevWidget">
+                <div class="dataset-loading">Laster dataset...</div>
             </div>
         </div>
     </div>
@@ -467,11 +522,100 @@
         // Update temperature every 5 minutes
         setInterval(fetchTemperature, 300000);
 
+        // Dataset functionality (reusable function)
+        function fetchDatasetData(url, widgetId, title) {
+            var xhr = new XMLHttpRequest();
+            var cacheBuster = '?t=' + new Date().getTime();
+            xhr.open('GET', url + cacheBuster, true);
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            var data = JSON.parse(xhr.responseText);
+                            displayDataset(data, widgetId, title);
+                        } catch (error) {
+                            console.error('Dataset parse error:', error);
+                            displayDatasetError(widgetId);
+                        }
+                    } else {
+                        console.error('Dataset fetch error:', xhr.status);
+                        displayDatasetError(widgetId);
+                    }
+                }
+            };
+            
+            xhr.send();
+        }
+
+        // Prod dataset
+        function fetchDataset() {
+            fetchDatasetData('https://api.data.oslo.systems/metadata/datasets', 'datasetWidget', 'Antall dataset i prod');
+        }
+
+        // Dev dataset
+        function fetchDatasetDev() {
+            fetchDatasetData('https://api.data-dev.oslo.systems/metadata/datasets', 'datasetDevWidget', 'Antall dataset i dev');
+        }
+
+        function displayDataset(data, widgetId, title) {
+            var datasetWidget = document.getElementById(widgetId);
+            
+            // Count objects by type
+            var fileCount = 0;
+            var eventCount = 0;
+            var domainCount = 0;
+            var totalCount = 0;
+            
+            // Check if data is an array or object
+            var items = Array.isArray(data) ? data : (data.data || []);
+            
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                // Get type from source.type or fallback to 'none'
+                var type = (item.source && item.source.type) ? item.source.type : 'none';
+                
+                if (type === 'file') {
+                    fileCount++;
+                    totalCount++;
+                } else if (type === 'event') {
+                    eventCount++;
+                    totalCount++;
+                } else if (type === 'domain' || type === 'none') {
+                    domainCount++;
+                    totalCount++;
+                }
+            }
+            
+            datasetWidget.innerHTML = 
+                '<div class="dataset-content">' +
+                    '<div class="dataset-title">' + title + ': ' + totalCount + '</div>' +
+                    '<div class="dataset-counts">' +
+                        '<div class="dataset-count">' + fileCount + ' filbasert</div>' +
+                        '<div class="dataset-count">' + eventCount + ' eventbasert</div>' +
+                        '<div class="dataset-count">' + domainCount + ' domenebasert</div>' +
+                    '</div>' +
+                '</div>';
+        }
+
+        function displayDatasetError(widgetId) {
+            var datasetWidget = document.getElementById(widgetId);
+            datasetWidget.innerHTML = '<div class="dataset-loading">Dataset ikke tilgjengelig</div>';
+        }
+
+        // Fetch datasets on page load
+        fetchDataset();
+        fetchDatasetDev();
+        
+        // Update datasets every 10 minutes
+        setInterval(fetchDataset, 600000);
+        setInterval(fetchDatasetDev, 600000);
+
         // Start carousel immediately (works in both fullscreen and normal mode)
         startCarousel();
 
         // Carousel functionality
-        var carouselItems = ['mirrorItem', 'weatherItem', 'temperatureItem'];
+        var carouselItems = ['mirrorItem', 'weatherItem', 'temperatureItem', 'datasetItem', 'datasetDevItem'];
         var currentCarouselIndex = 0;
         var carouselInterval;
 
