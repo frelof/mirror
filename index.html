@@ -406,7 +406,9 @@
         // Temperature functionality
         function fetchTemperature() {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', './data/temperature.json', true);
+            // Add cache-busting parameter to force fresh data
+            var cacheBuster = '?t=' + new Date().getTime();
+            xhr.open('GET', './data/temperature.json' + cacheBuster, true);
             
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {
