@@ -1,0 +1,81 @@
+name: Temperature Fetcher (curl)
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # every 10 minutes (UTC)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-temperature:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure jq is available (usually preinstalled)
+        run: |
+          command -v jq >/dev/null || (sudo apt-get update && sudo apt-get install -y jq)
+
+      - name: Create data directory
+        run: mkdir -p data
+
+      - name: Fetch temperature with curl + jq
+        env:
+          SHELLY_HOST: ${{ secrets.HOST }}           # e.g. shelly-199-eu.shelly.cloud
+          SHELLY_AUTH_KEY: ${{ secrets.SECRET }}
+          SHELLY_DEVICE_ID: ${{ secrets.DEVICE_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${SHELLY_HOST:?missing}"; : "${SHELLY_AUTH_KEY:?missing}"; : "${SHELLY_DEVICE_ID:?missing}"
+
+          # Call Shelly Cloud: POST form data (id + auth_key)
+          RESP="$(curl --fail-with-body -sS -X POST "https://${SHELLY_HOST}/device/status" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            --data "id=${SHELLY_DEVICE_ID}&auth_key=${SHELLY_AUTH_KEY}")"
+
+          # Extract temperature (°C) and humidity (%) — SHHT-1 uses tmp.tC and hum.value
+          tC="$(jq -r '
+            .data.device_status.tmp.tC
+            // .data.tmp.tC
+            // .data.device_status.temperature
+            // empty
+          ' <<<"$RESP")"
+
+          hum="$(jq -r '
+            .data.device_status.hum.value
+            // .data.hum.value
+            // empty
+          ' <<<"$RESP")"
+
+          if [ -z "$tC" ]; then
+            echo "Temperature not found in response. Showing first 2KB for debugging:"
+            echo "$RESP" | head -c 2000
+            exit 1
+          fi
+
+          # Build output JSON safely (numbers stay numbers)
+          if [ -n "$hum" ]; then HUM_OPT="--argjson hum $hum"; else HUM_OPT="--argjson hum null"; fi
+
+          jq -n \
+            --arg ts "$(date -Is)" \
+            --argjson tC "$tC" \
+            $HUM_OPT \
+            --arg dev "$SHELLY_DEVICE_ID" \
+            '{
+              timestamp: $ts,
+              temperature_c: $tC,
+              humidity_percent: $hum,
+            }' > data/temperature.json
+
+          echo "Updated: $(jq -r '.temperature_c' data/temperature.json) °C, humidity: $(jq -r '.humidity_percent' data/temperature.json // "n/a")"
+
+      - name: Commit and push temperature data
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/temperature.json
+          git diff --staged --quiet || git commit -m "Update temperature data [skip ci]"
+          git push
