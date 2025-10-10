@@ -1,0 +1,10 @@
+{
+  "timestamp": "2024-01-01T12:00:00.000Z",
+  "startArbeid": 480,
+  "sluttArbeid": 1020,
+  "stillePerioder": [
+    [555, 655],
+    [725, 840]
+  ],
+  "source": "oslokommune_dashboard"
+}
