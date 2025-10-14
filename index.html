@@ -732,6 +732,9 @@
         
         // Refresh configuration every hour
         setInterval(fetchStilletidConfig, 3600000);
+        
+        // Update display immediately with default values
+        updateStilletid();
 
         // Start carousel immediately (works in both fullscreen and normal mode)
         startCarousel();
