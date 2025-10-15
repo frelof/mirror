@@ -672,8 +672,8 @@
                         try {
                             var data = JSON.parse(xhr.responseText);
                             // Update global configuration
-                            startArbeid = data.startArbeid;
-                            sluttArbeid = data.sluttArbeid;
+                            startArbeid = data.startArbeid * 60;
+                            sluttArbeid = data.sluttArbeid * 60;
                             stillePerioder = data.stillePerioder;
                             console.log('Stilletid config updated:', data);
                             // Update display immediately
