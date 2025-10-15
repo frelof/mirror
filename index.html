@@ -693,13 +693,25 @@
         }
 
         function updateStilletid() {
+            // Use Oslo timezone
             var now = new Date();
-            var timer = now.getHours();
-            var minutter = now.getMinutes();
+            var osloTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Oslo' }));
+            var timer = osloTime.getHours();
+            var minutter = osloTime.getMinutes();
             var tid = timer * 60 + minutter;
 
             var statusDiv = document.getElementById('stilletidWidget').querySelector('.stilletid-status');
+            if (!statusDiv) {
+                console.error('Stilletid widget not found');
+                return;
+            }
+            
             var stilleTid = false;
+            
+            // Debug logging
+            console.log('Oslo time:', timer + ':' + String(minutter).padStart(2, '0'), '(', tid, 'minutes)');
+            console.log('Work hours:', startArbeid, '-', sluttArbeid);
+            console.log('Quiet periods:', stillePerioder);
 
             // Check if current time is in a quiet period
             for (var i = 0; i < stillePerioder.length; i++) {
