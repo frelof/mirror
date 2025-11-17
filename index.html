@@ -242,42 +242,6 @@
             color: #ffffff;
         }
 
-        .stilletid-widget {
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-align: center;
-            margin: 20px 0;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .stilletid-status {
-            font-size: 2.5rem;
-            font-weight: bold;
-            padding: 2rem 3rem;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .stilletid-status.quiet {
-            background-color: #F9C66B;
-            color: #2C2C2C;
-        }
-
-        .stilletid-status.free {
-            background-color: #C7F6C9;
-            color: #2C2C2C;
-        }
-
-        .stilletid-status.outside {
-            background-color: #888;
-            color: #ffffff;
-        }
-
         .mirror-square {
             width: 300px;
             height: 200px;
@@ -385,9 +349,6 @@
         </div>
     </div>
     
-    <div class="stilletid-widget" id="stilletidWidget">
-        <div class="stilletid-status">Laster...</div>
-    </div>
 
     <div id="fullscreenBtn" class="fullscreen-btn">[ ]</div>
 
@@ -650,101 +611,6 @@
         // Update datasets every 10 minutes
         setInterval(fetchDataset, 600000);
         setInterval(fetchDatasetDev, 600000);
-
-        // Stilletid functionality
-        var startArbeid = 8 * 60;  // Default: 08:00
-        var sluttArbeid = 17 * 60;  // Default: 17:00
-        var stillePerioder = [
-            [9*60 + 15, 10*60 + 55],  // Default: 09:15 - 10:55
-            [12*60 + 5, 14*60]         // Default: 12:05 - 14:00
-        ];
-
-        function fetchStilletidConfig() {
-            var xhr = new XMLHttpRequest();
-            var cacheBuster = '?t=' + new Date().getTime();
-            xhr.open('GET', './data/stilletid.json' + cacheBuster, true);
-            
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
-                        try {
-                            var data = JSON.parse(xhr.responseText);
-                            // Update global configuration
-                            startArbeid = data.startArbeid * 60;
-                            sluttArbeid = data.sluttArbeid * 60;
-                            stillePerioder = data.stillePerioder;
-                            console.log('Stilletid config updated:', data);
-                            // Update display immediately
-                            updateStilletid();
-                        } catch (error) {
-                            console.error('Stilletid config parse error:', error);
-                            // Continue with default values
-                        }
-                    } else {
-                        console.error('Stilletid config fetch error:', xhr.status);
-                        // Continue with default values
-                    }
-                }
-            };
-            
-            xhr.send();
-        }
-
-        function updateStilletid() {
-            // Use Oslo timezone
-            var now = new Date();
-            var osloTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Oslo' }));
-            var timer = osloTime.getHours();
-            var minutter = osloTime.getMinutes();
-            var tid = timer * 60 + minutter;
-
-            var statusDiv = document.getElementById('stilletidWidget').querySelector('.stilletid-status');
-            if (!statusDiv) {
-                console.error('Stilletid widget not found');
-                return;
-            }
-            
-            var stilleTid = false;
-            
-            // Debug logging
-            console.log('Oslo time:', timer + ':' + String(minutter).padStart(2, '0'), '(', tid, 'minutes)');
-            console.log('Work hours:', startArbeid, '-', sluttArbeid);
-            console.log('Quiet periods:', stillePerioder);
-
-            // Check if current time is in a quiet period
-            for (var i = 0; i < stillePerioder.length; i++) {
-                var start = stillePerioder[i][0];
-                var slutt = stillePerioder[i][1];
-                if (tid >= start && tid < slutt) {
-                    stilleTid = true;
-                    break;
-                }
-            }
-
-            // Update status
-            if (tid < startArbeid || tid >= sluttArbeid) {
-                statusDiv.textContent = 'Utenfor arbeidstid';
-                statusDiv.className = 'stilletid-status outside';
-            } else if (stilleTid) {
-                statusDiv.textContent = '🤫 Stilletid';
-                statusDiv.className = 'stilletid-status quiet';
-            } else {
-                statusDiv.textContent = '😀 Lov å prate';
-                statusDiv.className = 'stilletid-status free';
-            }
-        }
-
-        // Fetch stilletid configuration on page load
-        fetchStilletidConfig();
-        
-        // Update stilletid display every minute
-        setInterval(updateStilletid, 60000);
-        
-        // Refresh configuration every hour
-        setInterval(fetchStilletidConfig, 3600000);
-        
-        // Update display immediately with default values
-        updateStilletid();
 
         // Start carousel immediately (works in both fullscreen and normal mode)
         startCarousel();
